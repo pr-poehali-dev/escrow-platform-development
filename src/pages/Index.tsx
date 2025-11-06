@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ const Index = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -78,7 +79,8 @@ const Index = () => {
     setFormData({ name: '', email: '', phone: '', sphere: '' });
   };
 
-  const generateContract = () => {
+  const generateContract = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsGenerating(true);
     setTimeout(() => {
       const contract = `
@@ -131,46 +133,105 @@ ${contractData.conditions || '[Условия]'}
     });
   };
 
+  const searchableContent = useMemo(() => [
+    { section: 'main', text: 'Безопасные сделки без риска платите только за видимый результат эскроу-сервис для бизнеса и частных лиц' },
+    { section: 'how-it-works', text: 'Как это работает просто раз-два-три умный контракт ИИ-помощник резервирование средств выполнение обязательств успешное завершение' },
+    { section: 'spheres', text: 'Фриланс IT-разработка недвижимость автомобили маркетплейсы оборудование драгоценности деловые услуги' },
+    { section: 'depository', text: 'Надежное депонирование через банк Точка номинальный счет безопасность' },
+    { section: 'pricing', text: 'Прозрачные тарифы базовый старт бизнес про без скрытых комиссий' },
+    { section: 'faq', text: 'ответы на частые вопросы безопасность арбитраж цифровая подпись комиссия' },
+  ], []);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase();
+    return searchableContent
+      .filter(item => item.text.toLowerCase().includes(query))
+      .map(item => item.section);
+  }, [searchQuery, searchableContent]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (searchResults.length > 0) {
+      scrollToSection(searchResults[0]);
+      setIsSearchOpen(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#0A1A3A]">
+    <div className="min-h-screen bg-gradient-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
       <Toaster />
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0A1A3A]/95 backdrop-blur-md border-b border-white/10 transition-all duration-300">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#1a1a2e]/95 backdrop-blur-md border-b border-[#00d4ff]/20 transition-all duration-300">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Icon name="Shield" className="text-[#00C389]" size={32} />
-            <span className="text-2xl font-bold text-white">SafeDeal</span>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#00d4ff] to-[#0099cc] rounded-lg flex items-center justify-center">
+              <Icon name="ShieldCheck" className="text-white" size={28} />
+            </div>
+            <div>
+              <span className="text-2xl font-bold text-white block leading-tight">Доверенный</span>
+              <span className="text-xs text-[#00d4ff]">Цифровой Гарант</span>
+            </div>
           </div>
           
           <nav className="hidden md:flex items-center gap-8">
-            <button onClick={() => scrollToSection('main')} className="text-white/80 hover:text-white transition-colors">Главная</button>
-            <button onClick={() => scrollToSection('how-it-works')} className="text-white/80 hover:text-white transition-colors">Принцип сделок</button>
-            <button onClick={() => scrollToSection('spheres')} className="text-white/80 hover:text-white transition-colors">Сферы</button>
-            <button onClick={() => scrollToSection('pricing')} className="text-white/80 hover:text-white transition-colors">Тарифы</button>
-            <button onClick={() => scrollToSection('faq')} className="text-white/80 hover:text-white transition-colors">Помощь</button>
+            <button onClick={() => scrollToSection('main')} className="text-white/80 hover:text-[#00d4ff] transition-colors">Главная</button>
+            <button onClick={() => scrollToSection('how-it-works')} className="text-white/80 hover:text-[#00d4ff] transition-colors">Как работает</button>
+            <button onClick={() => scrollToSection('spheres')} className="text-white/80 hover:text-[#00d4ff] transition-colors">Сферы</button>
+            <button onClick={() => scrollToSection('pricing')} className="text-white/80 hover:text-[#00d4ff] transition-colors">Тарифы</button>
+            <button onClick={() => scrollToSection('faq')} className="text-white/80 hover:text-[#00d4ff] transition-colors">FAQ</button>
           </nav>
 
           <div className="flex items-center gap-4">
             <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
               <button onClick={() => setIsSearchOpen(true)}>
-                <Icon name="Search" className="text-white/60 hover:text-white cursor-pointer transition-colors" size={20} />
+                <Icon name="Search" className="text-white/60 hover:text-[#00d4ff] cursor-pointer transition-colors" size={20} />
               </button>
-              <DialogContent className="bg-[#0D2147] border-white/10">
+              <DialogContent className="bg-[#1a1a2e] border-[#00d4ff]/30">
                 <DialogHeader>
                   <DialogTitle className="text-white">Поиск по сайту</DialogTitle>
                 </DialogHeader>
-                <Input placeholder="Введите запрос..." className="bg-card/50 border-white/20 text-white" />
+                <div className="space-y-4">
+                  <Input 
+                    placeholder="Введите запрос..." 
+                    className="bg-[#16213e] border-[#00d4ff]/20 text-white"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch(searchQuery);
+                      }
+                    }}
+                  />
+                  {searchQuery && (
+                    <div className="space-y-2">
+                      <p className="text-white/60 text-sm">
+                        {searchResults.length > 0 
+                          ? `Найдено разделов: ${searchResults.length}` 
+                          : 'Ничего не найдено'}
+                      </p>
+                      {searchResults.length > 0 && (
+                        <Button 
+                          onClick={() => handleSearch(searchQuery)}
+                          className="w-full bg-[#00d4ff] hover:bg-[#0099cc] text-white"
+                        >
+                          Перейти к результатам
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </DialogContent>
             </Dialog>
             
             <button onClick={() => setIsAIDialogOpen(true)} className="relative group">
-              <Icon name="Bot" className="text-white/60 hover:text-[#00C389] cursor-pointer transition-all duration-300 hover:scale-110" size={20} />
-              <div className="absolute top-full right-0 mt-2 w-48 bg-card/95 backdrop-blur-sm p-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/10">
+              <Icon name="Bot" className="text-white/60 hover:text-[#00d4ff] cursor-pointer transition-all duration-300 hover:scale-110" size={20} />
+              <div className="absolute top-full right-0 mt-2 w-48 bg-[#1a1a2e]/95 backdrop-blur-sm p-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-[#00d4ff]/20">
                 <p className="text-xs text-white/80">ИИ-помощник для создания контрактов</p>
               </div>
             </button>
             
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 hidden md:flex">
-              Мой аккаунт
+            <Button variant="outline" className="border-[#00d4ff]/30 text-white hover:bg-[#00d4ff]/10 hidden md:flex">
+              Войти
             </Button>
             
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -179,15 +240,15 @@ ${contractData.conditions || '[Условия]'}
                   <Icon name="Menu" size={24} />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="bg-[#0A1A3A] border-white/10 w-[280px]">
+              <SheetContent side="right" className="bg-[#1a1a2e] border-[#00d4ff]/20 w-[280px]">
                 <nav className="flex flex-col gap-6 mt-8">
-                  <button onClick={() => scrollToSection('main')} className="text-white/80 hover:text-white transition-colors text-left text-lg">Главная</button>
-                  <button onClick={() => scrollToSection('how-it-works')} className="text-white/80 hover:text-white transition-colors text-left text-lg">Принцип сделок</button>
-                  <button onClick={() => scrollToSection('spheres')} className="text-white/80 hover:text-white transition-colors text-left text-lg">Сферы</button>
-                  <button onClick={() => scrollToSection('pricing')} className="text-white/80 hover:text-white transition-colors text-left text-lg">Тарифы</button>
-                  <button onClick={() => scrollToSection('faq')} className="text-white/80 hover:text-white transition-colors text-left text-lg">Помощь</button>
-                  <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 w-full mt-4">
-                    Мой аккаунт
+                  <button onClick={() => scrollToSection('main')} className="text-white/80 hover:text-[#00d4ff] transition-colors text-left text-lg">Главная</button>
+                  <button onClick={() => scrollToSection('how-it-works')} className="text-white/80 hover:text-[#00d4ff] transition-colors text-left text-lg">Как работает</button>
+                  <button onClick={() => scrollToSection('spheres')} className="text-white/80 hover:text-[#00d4ff] transition-colors text-left text-lg">Сферы</button>
+                  <button onClick={() => scrollToSection('pricing')} className="text-white/80 hover:text-[#00d4ff] transition-colors text-left text-lg">Тарифы</button>
+                  <button onClick={() => scrollToSection('faq')} className="text-white/80 hover:text-[#00d4ff] transition-colors text-left text-lg">FAQ</button>
+                  <Button variant="outline" className="border-[#00d4ff]/30 text-white hover:bg-[#00d4ff]/10 w-full mt-4">
+                    Войти
                   </Button>
                 </nav>
               </SheetContent>
@@ -197,10 +258,10 @@ ${contractData.conditions || '[Условия]'}
       </header>
 
       <Dialog open={isAIDialogOpen} onOpenChange={setIsAIDialogOpen}>
-        <DialogContent className="bg-[#0D2147] border-[#00C389]/30 max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-[#1a1a2e] border-[#00d4ff]/30 max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
-              <Icon name="Bot" className="text-[#00C389]" size={28} />
+              <Icon name="Bot" className="text-[#00d4ff]" size={28} />
               ИИ-помощник для создания контрактов
             </DialogTitle>
             <DialogDescription className="text-white/70">
@@ -208,20 +269,21 @@ ${contractData.conditions || '[Условия]'}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 mt-4">
+          <form onSubmit={generateContract} className="space-y-4 mt-4">
             <div>
               <Label className="text-white mb-2">Тип сделки</Label>
               <Select value={contractData.dealType} onValueChange={(value) => setContractData({...contractData, dealType: value})}>
-                <SelectTrigger className="bg-card/50 border-white/20 text-white">
+                <SelectTrigger className="bg-[#16213e] border-[#00d4ff]/20 text-white">
                   <SelectValue placeholder="Выберите тип сделки" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0D2147] border-white/10">
-                  <SelectItem value="services">Услуги и аутсорсинг</SelectItem>
-                  <SelectItem value="auto">Автомобили</SelectItem>
-                  <SelectItem value="electronics">Электроника</SelectItem>
-                  <SelectItem value="jewelry">Драгоценности</SelectItem>
-                  <SelectItem value="events">Мероприятия</SelectItem>
-                  <SelectItem value="digital">Цифровые активы</SelectItem>
+                <SelectContent className="bg-[#1a1a2e] border-[#00d4ff]/20">
+                  <SelectItem value="freelance">Фриланс и IT-разработка</SelectItem>
+                  <SelectItem value="realestate">Недвижимость</SelectItem>
+                  <SelectItem value="auto">Автомобили и транспорт</SelectItem>
+                  <SelectItem value="marketplace">Маркетплейсы</SelectItem>
+                  <SelectItem value="equipment">Оборудование и техника</SelectItem>
+                  <SelectItem value="jewelry">Драгоценности и антиквариат</SelectItem>
+                  <SelectItem value="business">Деловые услуги</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -232,7 +294,7 @@ ${contractData.conditions || '[Условия]'}
                 <Input
                   value={contractData.sellerName}
                   onChange={(e) => setContractData({...contractData, sellerName: e.target.value})}
-                  className="bg-card/50 border-white/20 text-white"
+                  className="bg-[#16213e] border-[#00d4ff]/20 text-white"
                   placeholder="ООО 'Компания'"
                 />
               </div>
@@ -241,7 +303,7 @@ ${contractData.conditions || '[Условия]'}
                 <Input
                   value={contractData.buyerName}
                   onChange={(e) => setContractData({...contractData, buyerName: e.target.value})}
-                  className="bg-card/50 border-white/20 text-white"
+                  className="bg-[#16213e] border-[#00d4ff]/20 text-white"
                   placeholder="Иван Иванов"
                 />
               </div>
@@ -253,7 +315,7 @@ ${contractData.conditions || '[Условия]'}
                 <Input
                   value={contractData.amount}
                   onChange={(e) => setContractData({...contractData, amount: e.target.value})}
-                  className="bg-card/50 border-white/20 text-white"
+                  className="bg-[#16213e] border-[#00d4ff]/20 text-white"
                   placeholder="100000"
                   type="number"
                 />
@@ -263,7 +325,7 @@ ${contractData.conditions || '[Условия]'}
                 <Input
                   value={contractData.deadline}
                   onChange={(e) => setContractData({...contractData, deadline: e.target.value})}
-                  className="bg-card/50 border-white/20 text-white"
+                  className="bg-[#16213e] border-[#00d4ff]/20 text-white"
                   placeholder="30 дней"
                 />
               </div>
@@ -274,7 +336,7 @@ ${contractData.conditions || '[Условия]'}
               <Textarea
                 value={contractData.dealDescription}
                 onChange={(e) => setContractData({...contractData, dealDescription: e.target.value})}
-                className="bg-card/50 border-white/20 text-white min-h-[80px]"
+                className="bg-[#16213e] border-[#00d4ff]/20 text-white min-h-[80px]"
                 placeholder="Разработка веб-сайта с адаптивным дизайном..."
               />
             </div>
@@ -284,15 +346,16 @@ ${contractData.conditions || '[Условия]'}
               <Textarea
                 value={contractData.conditions}
                 onChange={(e) => setContractData({...contractData, conditions: e.target.value})}
-                className="bg-card/50 border-white/20 text-white min-h-[80px]"
+                className="bg-[#16213e] border-[#00d4ff]/20 text-white min-h-[80px]"
                 placeholder="Принятие работы в течение 3 дней после сдачи..."
               />
             </div>
 
             <Button
-              onClick={generateContract}
+              type="button"
+              onClick={() => generateContract()}
               disabled={isGenerating}
-              className="w-full bg-[#00C389] hover:bg-[#00A572] text-white text-lg py-6"
+              className="w-full bg-[#00d4ff] hover:bg-[#0099cc] text-white text-lg py-6"
             >
               {isGenerating ? (
                 <>
@@ -313,18 +376,20 @@ ${contractData.conditions || '[Условия]'}
                 <Textarea
                   value={generatedContract}
                   readOnly
-                  className="bg-card/50 border-[#00C389]/30 text-white min-h-[300px] font-mono text-sm"
+                  className="bg-[#16213e] border-[#00d4ff]/30 text-white min-h-[300px] font-mono text-sm"
                 />
                 <div className="flex gap-3 mt-3">
                   <Button
+                    type="button"
                     onClick={downloadContract}
                     variant="outline"
-                    className="flex-1 border-white/20 text-white hover:bg-white/10"
+                    className="flex-1 border-[#00d4ff]/30 text-white hover:bg-[#00d4ff]/10"
                   >
                     <Icon name="Download" className="mr-2" size={18} />
                     Скачать
                   </Button>
                   <Button
+                    type="button"
                     onClick={() => {
                       navigator.clipboard.writeText(generatedContract);
                       toast({
@@ -333,7 +398,7 @@ ${contractData.conditions || '[Условия]'}
                       });
                     }}
                     variant="outline"
-                    className="flex-1 border-white/20 text-white hover:bg-white/10"
+                    className="flex-1 border-[#00d4ff]/30 text-white hover:bg-[#00d4ff]/10"
                   >
                     <Icon name="Copy" className="mr-2" size={18} />
                     Копировать
@@ -341,58 +406,59 @@ ${contractData.conditions || '[Условия]'}
                 </div>
               </div>
             )}
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 
       <section id="main" className="pt-32 pb-24 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#00C389]/5 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#00d4ff]/5 to-transparent pointer-events-none" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-[#00d4ff]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#0099cc]/10 rounded-full blur-3xl" />
         <div className="container mx-auto max-w-6xl relative">
           <div className="text-center animate-fade-in">
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              Безопасные сделки без риска:<br />
-              <span className="text-[#00C389]">платите только за видимый результат</span>
+              Безопасные сделки<br />
+              <span className="text-[#00d4ff]">без риска и переплат</span>
             </h1>
-            <p className="text-xl md:text-2xl text-white/60 italic mb-4">
-              "Доверяй, но проверяй"
+            <p className="text-xl md:text-2xl text-white/80 mb-4">
+              Платите только за видимый результат
             </p>
-            <p className="text-lg text-white/80 mb-12">
-              Эскроу-сервис для бизнеса и частных лиц
+            <p className="text-lg text-white/60 mb-12">
+              Цифровой гарант для B2B и частных лиц
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button onClick={() => scrollToSection('depository')} size="lg" className="bg-[#00C389] hover:bg-[#00A572] text-white text-lg px-8 py-6 hover-scale">
+              <Button onClick={() => scrollToSection('depository')} size="lg" className="bg-[#00d4ff] hover:bg-[#0099cc] text-white text-lg px-8 py-6 hover-scale">
                 Начать сделку
                 <Icon name="ArrowRight" className="ml-2" size={20} />
               </Button>
-              <Button onClick={() => scrollToSection('how-it-works')} size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 text-lg px-8 py-6 hover-scale">
-                Подробнее
+              <Button onClick={() => scrollToSection('how-it-works')} size="lg" variant="outline" className="border-[#00d4ff]/30 text-white hover:bg-[#00d4ff]/10 text-lg px-8 py-6 hover-scale">
+                Как это работает
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="how-it-works" className="py-24 px-6 bg-[#0D2147]">
+      <section id="how-it-works" className="py-24 px-6 bg-[#16213e]/50">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Как это работает? Просто, как раз-два-три
+              Как это работает?
             </h2>
+            <p className="text-white/60 text-lg">Простая схема безопасных расчетов</p>
           </div>
 
           <div className="mb-20">
-            <h3 className="text-3xl font-bold text-white mb-6 text-center">
-              Умный контракт для вашей безопасности
-            </h3>
-            <Card className="bg-card/50 border-white/10 p-8 hover:border-[#00C389]/50 transition-all duration-300 hover-scale cursor-pointer" onClick={() => setIsAIDialogOpen(true)}>
+            <Card className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 p-8 hover:border-[#00d4ff]/50 transition-all duration-300 hover-scale cursor-pointer" onClick={() => setIsAIDialogOpen(true)}>
               <div className="flex items-start gap-4">
-                <Icon name="Sparkles" className="text-[#F59E0B] flex-shrink-0 animate-pulse" size={40} />
+                <Icon name="Sparkles" className="text-[#00d4ff] flex-shrink-0 animate-pulse" size={40} />
                 <div>
-                  <p className="text-white/90 text-lg leading-relaxed mb-4">
-                    Наш ИИ-помощник автоматически составит для вас юридически корректный контракт на основе параметров вашей сделки. 
-                    Подпишите его простой и юридически значимой цифровой подписью за пару кликов — и защитите свои интересы до начала работ.
+                  <h3 className="text-2xl font-bold text-white mb-4">ИИ-помощник создаст договор за вас</h3>
+                  <p className="text-white/80 text-lg leading-relaxed mb-4">
+                    Просто опишите сделку — наш искусственный интеллект составит юридически корректный договор с учетом всех деталей. 
+                    Автоматическая генерация, защита интересов обеих сторон, соответствие законодательству РФ.
                   </p>
-                  <Button className="bg-[#F59E0B] hover:bg-[#D97706] text-white">
+                  <Button className="bg-[#00d4ff] hover:bg-[#0099cc] text-white">
                     <Icon name="Bot" className="mr-2" size={18} />
                     Попробовать ИИ-помощника
                   </Button>
@@ -402,75 +468,75 @@ ${contractData.conditions || '[Условия]'}
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 mb-16">
-            <Card className={`bg-card/50 border-white/10 p-8 transition-all duration-500 hover-scale ${
-              activeStep === 0 ? 'border-[#00C389] shadow-lg shadow-[#00C389]/20' : 'hover:border-[#00C389]/50'
+            <Card className={`bg-[#1a1a2e]/50 border-[#00d4ff]/20 p-8 transition-all duration-500 hover-scale ${
+              activeStep === 0 ? 'border-[#00d4ff] shadow-lg shadow-[#00d4ff]/20' : 'hover:border-[#00d4ff]/50'
             }`}>
               <div className="flex flex-col items-center text-center">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 transition-all duration-500 ${
-                  activeStep === 0 ? 'bg-[#00C389] scale-110' : 'bg-[#00C389]/20'
+                  activeStep === 0 ? 'bg-[#00d4ff] scale-110' : 'bg-[#00d4ff]/20'
                 }`}>
                   <Icon name="Wallet" className="text-white" size={32} />
                 </div>
-                <h4 className="text-2xl font-bold text-white mb-4">Шаг 1: Резервирование средств</h4>
+                <h4 className="text-2xl font-bold text-white mb-4">1. Резервирование</h4>
                 <p className="text-white/70">
-                  Покупатель заключает контракт и резервирует деньги на номинальном счете в банке «Точка». Средства заморожены.
+                  Покупатель блокирует средства на защищенном счете. Деньги заморожены до выполнения условий.
                 </p>
               </div>
             </Card>
 
-            <Card className={`bg-card/50 border-white/10 p-8 transition-all duration-500 hover-scale ${
-              activeStep === 1 ? 'border-[#00C389] shadow-lg shadow-[#00C389]/20' : 'hover:border-[#00C389]/50'
+            <Card className={`bg-[#1a1a2e]/50 border-[#00d4ff]/20 p-8 transition-all duration-500 hover-scale ${
+              activeStep === 1 ? 'border-[#00d4ff] shadow-lg shadow-[#00d4ff]/20' : 'hover:border-[#00d4ff]/50'
             }`}>
               <div className="flex flex-col items-center text-center">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 transition-all duration-500 ${
-                  activeStep === 1 ? 'bg-[#00C389] scale-110' : 'bg-[#00C389]/20'
+                  activeStep === 1 ? 'bg-[#00d4ff] scale-110' : 'bg-[#00d4ff]/20'
                 }`}>
                   <Icon name="CheckCircle" className="text-white" size={32} />
                 </div>
-                <h4 className="text-2xl font-bold text-white mb-4">Шаг 2: Выполнение обязательств</h4>
+                <h4 className="text-2xl font-bold text-white mb-4">2. Выполнение</h4>
                 <p className="text-white/70">
-                  Исполнитель спокойно выполняет работу или поставляет товар. Статус сделки отслеживается онлайн.
+                  Продавец выполняет обязательства. Вся информация о сделке доступна онлайн.
                 </p>
               </div>
             </Card>
 
-            <Card className={`bg-card/50 border-white/10 p-8 transition-all duration-500 hover-scale ${
-              activeStep === 2 ? 'border-[#00C389] shadow-lg shadow-[#00C389]/20' : 'hover:border-[#00C389]/50'
+            <Card className={`bg-[#1a1a2e]/50 border-[#00d4ff]/20 p-8 transition-all duration-500 hover-scale ${
+              activeStep === 2 ? 'border-[#00d4ff] shadow-lg shadow-[#00d4ff]/20' : 'hover:border-[#00d4ff]/50'
             }`}>
               <div className="flex flex-col items-center text-center">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 transition-all duration-500 ${
-                  activeStep === 2 ? 'bg-[#00C389] scale-110' : 'bg-[#00C389]/20'
+                  activeStep === 2 ? 'bg-[#00d4ff] scale-110' : 'bg-[#00d4ff]/20'
                 }`}>
                   <Icon name="LockOpen" className="text-white" size={32} />
                 </div>
-                <h4 className="text-2xl font-bold text-white mb-4">Шаг 3: Успешное завершение</h4>
+                <h4 className="text-2xl font-bold text-white mb-4">3. Завершение</h4>
                 <p className="text-white/70">
-                  Покупатель подтверждает, что все условия выполнены. Средства автоматически размораживаются и переводятся продавцу.
+                  После подтверждения покупателя средства автоматически переводятся продавцу.
                 </p>
               </div>
             </Card>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-card/30 border border-white/10 p-6 rounded-lg hover-scale transition-all">
-              <Icon name="Scale" className="text-[#F59E0B] mb-3" size={28} />
+            <div className="bg-[#1a1a2e]/30 border border-[#00d4ff]/20 p-6 rounded-lg hover-scale transition-all">
+              <Icon name="Scale" className="text-[#00d4ff] mb-3" size={28} />
               <h5 className="text-white font-semibold mb-2">Юридическая защита</h5>
-              <p className="text-white/60 text-sm">Через лицензированный банк</p>
+              <p className="text-white/60 text-sm">Через банк с лицензией ЦБ РФ</p>
             </div>
-            <div className="bg-card/30 border border-white/10 p-6 rounded-lg hover-scale transition-all">
-              <Icon name="Zap" className="text-[#F59E0B] mb-3" size={28} />
-              <h5 className="text-white font-semibold mb-2">Полная автоматизация</h5>
-              <p className="text-white/60 text-sm">Никакой бумажной волокиты</p>
+            <div className="bg-[#1a1a2e]/30 border border-[#00d4ff]/20 p-6 rounded-lg hover-scale transition-all">
+              <Icon name="Zap" className="text-[#00d4ff] mb-3" size={28} />
+              <h5 className="text-white font-semibold mb-2">Автоматизация</h5>
+              <p className="text-white/60 text-sm">Умные контракты от ИИ</p>
             </div>
-            <div className="bg-card/30 border border-white/10 p-6 rounded-lg hover-scale transition-all">
-              <Icon name="ShieldCheck" className="text-[#F59E0B] mb-3" size={28} />
-              <h5 className="text-white font-semibold mb-2">Снижение рисков</h5>
-              <p className="text-white/60 text-sm">Гарантия для обеих сторон</p>
+            <div className="bg-[#1a1a2e]/30 border border-[#00d4ff]/20 p-6 rounded-lg hover-scale transition-all">
+              <Icon name="ShieldCheck" className="text-[#00d4ff] mb-3" size={28} />
+              <h5 className="text-white font-semibold mb-2">Защита сторон</h5>
+              <p className="text-white/60 text-sm">Гарантия для всех участников</p>
             </div>
-            <div className="bg-card/30 border border-white/10 p-6 rounded-lg hover-scale transition-all">
-              <Icon name="Eye" className="text-[#F59E0B] mb-3" size={28} />
+            <div className="bg-[#1a1a2e]/30 border border-[#00d4ff]/20 p-6 rounded-lg hover-scale transition-all">
+              <Icon name="Eye" className="text-[#00d4ff] mb-3" size={28} />
               <h5 className="text-white font-semibold mb-2">Прозрачность</h5>
-              <p className="text-white/60 text-sm">Все этапы сделки онлайн</p>
+              <p className="text-white/60 text-sm">Контроль на каждом этапе</p>
             </div>
           </div>
         </div>
@@ -478,23 +544,25 @@ ${contractData.conditions || '[Условия]'}
 
       <section id="spheres" className="py-24 px-6">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-16 text-center">
-            Для любых сделок, где важен результат
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 text-center">
+            Сферы применения
           </h2>
+          <p className="text-white/60 text-center mb-16 text-lg">Работаем со всеми видами сделок</p>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { title: 'Услуги и аутсорсинг', icon: 'Briefcase', desc: 'Фриланс, разработка, маркетинг, консалтинг' },
-              { title: 'Автомобили и транспорт', icon: 'Car', desc: 'Покупка авто, спецтехники, мотоциклов' },
-              { title: 'Электроника и техника', icon: 'Laptop', desc: 'Гаджеты, компьютеры, бытовая техника' },
-              { title: 'Драгоценности и роскошь', icon: 'Gem', desc: 'Часы, украшения, предметы искусства' },
-              { title: 'Мероприятия', icon: 'Calendar', desc: 'Свадьбы, корпоративы, организация событий' },
-              { title: 'Цифровые активы и NFT', icon: 'Coins', desc: 'Токены, доменные имена, цифровое искусство' },
+              { title: 'Фриланс и IT-разработка', icon: 'Code', desc: 'Веб-разработка, дизайн, маркетинг, консалтинг' },
+              { title: 'Недвижимость', icon: 'Home', desc: 'Покупка, аренда, инвестиции в объекты' },
+              { title: 'Автомобили и транспорт', icon: 'Car', desc: 'Покупка авто, спецтехники, логистика' },
+              { title: 'Маркетплейсы', icon: 'ShoppingCart', desc: 'Сделки между продавцами и покупателями' },
+              { title: 'Оборудование и техника', icon: 'Settings', desc: 'Промышленное оборудование, электроника' },
+              { title: 'Драгоценности и антиквариат', icon: 'Gem', desc: 'Ювелирные изделия, предметы искусства' },
+              { title: 'Деловые услуги', icon: 'Briefcase', desc: 'B2B услуги, подряды, аутсорсинг' },
             ].map((sphere, index) => (
-              <Card key={index} className="bg-card border-white/10 overflow-hidden hover:border-[#00C389]/50 transition-all duration-300 group cursor-pointer hover-scale animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+              <Card key={index} className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 overflow-hidden hover:border-[#00d4ff]/50 transition-all duration-300 group cursor-pointer hover-scale animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
                 <div className="p-8">
-                  <div className="w-14 h-14 bg-[#00C389]/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-[#00C389]/30 transition-colors">
-                    <Icon name={sphere.icon} className="text-[#00C389]" size={28} />
+                  <div className="w-14 h-14 bg-[#00d4ff]/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-[#00d4ff]/30 transition-colors">
+                    <Icon name={sphere.icon} className="text-[#00d4ff]" size={28} />
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2">{sphere.title}</h3>
                   <p className="text-white/60">{sphere.desc}</p>
@@ -505,49 +573,49 @@ ${contractData.conditions || '[Условия]'}
         </div>
       </section>
 
-      <section id="depository" className="py-24 px-6 bg-[#0D2147]">
+      <section id="depository" className="py-24 px-6 bg-[#16213e]/50">
         <div className="container mx-auto max-w-4xl">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-8 text-center">
             Надежное депонирование через банк «Точка»
           </h2>
           <div className="mb-12">
             <p className="text-lg text-white/80 leading-relaxed mb-6">
-              Номинальный счет — это специальный банковский счет, который открывается для временного хранения средств в интересах третьих лиц. 
-              В отличие от перевода денег юристу или частному эскроу-агенту, номинальный счет в банке «Точка» обеспечивает максимальную безопасность.
+              Номинальный счет — специальный банковский счет для временного хранения средств. 
+              В отличие от перевода денег частным лицам, номинальный счет в банке «Точка» обеспечивает максимальную безопасность.
             </p>
             <p className="text-lg text-white/80 leading-relaxed">
-              Банк «Точка» имеет лицензию ЦБ РФ и предоставляет банковские гарантии. Ваши средства защищены на государственном уровне.
+              Банк имеет лицензию ЦБ РФ и предоставляет банковские гарантии. Ваши средства защищены на государственном уровне.
             </p>
           </div>
 
-          <Card className="bg-card/50 border-white/10 p-8 mb-8 hover:border-[#00C389]/30 transition-all">
+          <Card className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 p-8 mb-8 hover:border-[#00d4ff]/30 transition-all">
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="flex flex-col items-center animate-fade-in">
-                <div className="w-20 h-20 bg-[#00C389]/20 rounded-full flex items-center justify-center mb-3 hover-scale">
-                  <Icon name="User" className="text-[#00C389]" size={36} />
+                <div className="w-20 h-20 bg-[#00d4ff]/20 rounded-full flex items-center justify-center mb-3 hover-scale">
+                  <Icon name="User" className="text-[#00d4ff]" size={36} />
                 </div>
                 <p className="text-white font-semibold">Покупатель</p>
               </div>
-              <div className="flex items-center gap-2 animate-pulse">
-                <div className="h-1 w-8 bg-[#00C389]/30"></div>
-                <Icon name="ArrowRight" className="text-[#00C389]" size={28} />
-                <div className="h-1 w-8 bg-[#00C389]/30"></div>
+              <div className="flex items-center gap-2">
+                <div className="h-1 w-8 bg-[#00d4ff]/30"></div>
+                <Icon name="ArrowRight" className="text-[#00d4ff]" size={28} />
+                <div className="h-1 w-8 bg-[#00d4ff]/30"></div>
               </div>
               <div className="flex flex-col items-center animate-fade-in" style={{ animationDelay: '200ms' }}>
-                <div className="w-20 h-20 bg-[#F59E0B]/20 rounded-full flex items-center justify-center mb-3 hover-scale">
-                  <Icon name="Building2" className="text-[#F59E0B]" size={36} />
+                <div className="w-20 h-20 bg-[#00d4ff]/20 rounded-full flex items-center justify-center mb-3 hover-scale">
+                  <Icon name="Building2" className="text-[#00d4ff]" size={36} />
                 </div>
                 <p className="text-white font-semibold">Банк «Точка»</p>
                 <p className="text-white/60 text-sm">Номинальный счет</p>
               </div>
-              <div className="flex items-center gap-2 animate-pulse" style={{ animationDelay: '100ms' }}>
-                <div className="h-1 w-8 bg-[#00C389]/30"></div>
-                <Icon name="ArrowRight" className="text-[#00C389]" size={28} />
-                <div className="h-1 w-8 bg-[#00C389]/30"></div>
+              <div className="flex items-center gap-2">
+                <div className="h-1 w-8 bg-[#00d4ff]/30"></div>
+                <Icon name="ArrowRight" className="text-[#00d4ff]" size={28} />
+                <div className="h-1 w-8 bg-[#00d4ff]/30"></div>
               </div>
               <div className="flex flex-col items-center animate-fade-in" style={{ animationDelay: '400ms' }}>
-                <div className="w-20 h-20 bg-[#00C389]/20 rounded-full flex items-center justify-center mb-3 hover-scale">
-                  <Icon name="UserCheck" className="text-[#00C389]" size={36} />
+                <div className="w-20 h-20 bg-[#00d4ff]/20 rounded-full flex items-center justify-center mb-3 hover-scale">
+                  <Icon name="UserCheck" className="text-[#00d4ff]" size={36} />
                 </div>
                 <p className="text-white font-semibold">Продавец</p>
               </div>
@@ -555,9 +623,9 @@ ${contractData.conditions || '[Условия]'}
           </Card>
 
           <div className="text-center">
-            <Button onClick={() => setIsAIDialogOpen(true)} size="lg" className="bg-[#00C389] hover:bg-[#00A572] text-white hover-scale">
+            <Button onClick={() => setIsAIDialogOpen(true)} size="lg" className="bg-[#00d4ff] hover:bg-[#0099cc] text-white hover-scale">
               <Icon name="Rocket" className="mr-2" size={20} />
-              Зарегистрироваться и начать сделку
+              Создать договор с ИИ-помощником
             </Button>
           </div>
         </div>
@@ -571,33 +639,33 @@ ${contractData.conditions || '[Условия]'}
           <p className="text-white/60 text-center mb-16">Без скрытых комиссий</p>
 
           <div className="grid md:grid-cols-4 gap-6">
-            <Card className="bg-card border-white/10 p-8 hover-scale transition-all">
+            <Card className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 p-8 hover-scale transition-all">
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-white mb-2">Базовый</h3>
                 <p className="text-white/60">Для разовых сделок</p>
               </div>
               <div className="mb-6">
-                <div className="text-4xl font-bold text-[#00C389] mb-2">0.8%</div>
+                <div className="text-4xl font-bold text-[#00d4ff] mb-2">0.8%</div>
                 <p className="text-white/60">+ 190 ₽ за сделку</p>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">Без абонентской платы</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">ИИ-контракты</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">Базовая поддержка</span>
                 </li>
               </ul>
             </Card>
 
-            <Card className="bg-card border-[#00C389]/50 p-8 relative hover-scale transition-all">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00C389] text-white text-xs px-3 py-1 rounded-full">
+            <Card className="bg-[#1a1a2e]/50 border-[#00d4ff]/50 p-8 relative hover-scale transition-all">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00d4ff] text-white text-xs px-3 py-1 rounded-full">
                 Популярный
               </div>
               <div className="mb-6">
@@ -605,70 +673,70 @@ ${contractData.conditions || '[Условия]'}
                 <p className="text-white/60">Для малого бизнеса</p>
               </div>
               <div className="mb-6">
-                <div className="text-4xl font-bold text-[#00C389] mb-2">2 990 ₽</div>
+                <div className="text-4xl font-bold text-[#00d4ff] mb-2">2 990 ₽</div>
                 <p className="text-white/60">в месяц</p>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">Комиссия 0.5%</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">До 20 сделок</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">Приоритетная поддержка</span>
                 </li>
               </ul>
             </Card>
 
-            <Card className="bg-card border-white/10 p-8 hover-scale transition-all">
+            <Card className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 p-8 hover-scale transition-all">
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-white mb-2">Бизнес</h3>
                 <p className="text-white/60">Для растущих компаний</p>
               </div>
               <div className="mb-6">
-                <div className="text-4xl font-bold text-[#00C389] mb-2">7 990 ₽</div>
+                <div className="text-4xl font-bold text-[#00d4ff] mb-2">7 990 ₽</div>
                 <p className="text-white/60">в месяц</p>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">Комиссия 0.3%</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">До 100 сделок</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">Персональный менеджер</span>
                 </li>
               </ul>
             </Card>
 
-            <Card className="bg-card border-white/10 p-8 hover-scale transition-all">
+            <Card className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 p-8 hover-scale transition-all">
               <div className="mb-6">
                 <h3 className="text-2xl font-bold text-white mb-2">Про</h3>
                 <p className="text-white/60">Для крупного бизнеса</p>
               </div>
               <div className="mb-6">
-                <div className="text-4xl font-bold text-[#00C389] mb-2">19 990 ₽</div>
+                <div className="text-4xl font-bold text-[#00d4ff] mb-2">19 990 ₽</div>
                 <p className="text-white/60">в месяц</p>
               </div>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">Комиссия 0.2%</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">Неограниченно сделок</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Icon name="Check" className="text-[#00C389] flex-shrink-0 mt-1" size={16} />
+                  <Icon name="Check" className="text-[#00d4ff] flex-shrink-0 mt-1" size={16} />
                   <span className="text-white/80 text-sm">API интеграция</span>
                 </li>
               </ul>
@@ -677,15 +745,15 @@ ${contractData.conditions || '[Условия]'}
         </div>
       </section>
 
-      <section id="faq" className="py-24 px-6 bg-[#0D2147]">
+      <section id="faq" className="py-24 px-6 bg-[#16213e]/50">
         <div className="container mx-auto max-w-3xl">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-12 text-center">
-            Ответы на частые вопросы
+            Часто задаваемые вопросы
           </h2>
 
           <Accordion type="single" collapsible className="space-y-4">
-            <AccordionItem value="item-1" className="bg-card/50 border-white/10 rounded-lg px-6">
-              <AccordionTrigger className="text-white hover:text-[#00C389] text-left">
+            <AccordionItem value="item-1" className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 rounded-lg px-6">
+              <AccordionTrigger className="text-white hover:text-[#00d4ff] text-left">
                 Насколько это безопасно?
               </AccordionTrigger>
               <AccordionContent className="text-white/70">
@@ -694,8 +762,8 @@ ${contractData.conditions || '[Условия]'}
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-2" className="bg-card/50 border-white/10 rounded-lg px-6">
-              <AccordionTrigger className="text-white hover:text-[#00C389] text-left">
+            <AccordionItem value="item-2" className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 rounded-lg px-6">
+              <AccordionTrigger className="text-white hover:text-[#00d4ff] text-left">
                 Что будет, если покупатель/продавец меня обманет?
               </AccordionTrigger>
               <AccordionContent className="text-white/70">
@@ -704,8 +772,8 @@ ${contractData.conditions || '[Условия]'}
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-3" className="bg-card/50 border-white/10 rounded-lg px-6">
-              <AccordionTrigger className="text-white hover:text-[#00C389] text-left">
+            <AccordionItem value="item-3" className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 rounded-lg px-6">
+              <AccordionTrigger className="text-white hover:text-[#00d4ff] text-left">
                 Как быстро замораживаются и размораживаются деньги?
               </AccordionTrigger>
               <AccordionContent className="text-white/70">
@@ -714,8 +782,8 @@ ${contractData.conditions || '[Условия]'}
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-4" className="bg-card/50 border-white/10 rounded-lg px-6">
-              <AccordionTrigger className="text-white hover:text-[#00C389] text-left">
+            <AccordionItem value="item-4" className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 rounded-lg px-6">
+              <AccordionTrigger className="text-white hover:text-[#00d4ff] text-left">
                 Юридически ли значима цифровая подпись?
               </AccordionTrigger>
               <AccordionContent className="text-white/70">
@@ -724,8 +792,8 @@ ${contractData.conditions || '[Условия]'}
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-5" className="bg-card/50 border-white/10 rounded-lg px-6">
-              <AccordionTrigger className="text-white hover:text-[#00C389] text-left">
+            <AccordionItem value="item-5" className="bg-[#1a1a2e]/50 border-[#00d4ff]/20 rounded-lg px-6">
+              <AccordionTrigger className="text-white hover:text-[#00d4ff] text-left">
                 Кто платит комиссию?
               </AccordionTrigger>
               <AccordionContent className="text-white/70">
@@ -739,13 +807,13 @@ ${contractData.conditions || '[Условия]'}
 
       <section id="lead-form" className="py-24 px-6">
         <div className="container mx-auto max-w-2xl">
-          <div className="bg-gradient-to-br from-[#00C389]/20 to-[#F59E0B]/20 border border-[#00C389]/30 rounded-2xl p-12">
+          <div className="bg-gradient-to-br from-[#00d4ff]/20 to-[#0099cc]/20 border border-[#00d4ff]/30 rounded-2xl p-12">
             <div className="text-center mb-8">
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                Станьте первым — получите специальные условия!
+                Получите спецпредложение!
               </h2>
               <p className="text-white/80 text-lg">
-                0% комиссии на первые 3 сделки + персональный менеджер на первый месяц
+                0% комиссии на первые 3 сделки + персональный менеджер
               </p>
             </div>
 
@@ -756,7 +824,7 @@ ${contractData.conditions || '[Условия]'}
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="bg-card/50 border-white/20 text-white"
+                  className="bg-[#16213e] border-[#00d4ff]/20 text-white"
                   placeholder="Иван Петров"
                 />
               </div>
@@ -768,7 +836,7 @@ ${contractData.conditions || '[Условия]'}
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="bg-card/50 border-white/20 text-white"
+                  className="bg-[#16213e] border-[#00d4ff]/20 text-white"
                   placeholder="ivan@example.com"
                 />
               </div>
@@ -779,7 +847,7 @@ ${contractData.conditions || '[Условия]'}
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="bg-card/50 border-white/20 text-white"
+                  className="bg-[#16213e] border-[#00d4ff]/20 text-white"
                   placeholder="+7 (999) 123-45-67"
                 />
               </div>
@@ -790,12 +858,12 @@ ${contractData.conditions || '[Условия]'}
                   id="sphere"
                   value={formData.sphere}
                   onChange={(e) => setFormData({ ...formData, sphere: e.target.value })}
-                  className="bg-card/50 border-white/20 text-white"
+                  className="bg-[#16213e] border-[#00d4ff]/20 text-white"
                   placeholder="Например: фриланс, авто, недвижимость"
                 />
               </div>
 
-              <Button type="submit" size="lg" className="w-full bg-[#00C389] hover:bg-[#00A572] text-white text-lg">
+              <Button type="submit" size="lg" className="w-full bg-[#00d4ff] hover:bg-[#0099cc] text-white text-lg">
                 Получить предложение
                 <Icon name="Sparkles" className="ml-2" size={20} />
               </Button>
@@ -804,13 +872,18 @@ ${contractData.conditions || '[Условия]'}
         </div>
       </section>
 
-      <footer className="bg-[#050D1A] border-t border-white/10 py-12 px-6">
+      <footer className="bg-[#0f1419] border-t border-[#00d4ff]/20 py-12 px-6">
         <div className="container mx-auto max-w-6xl">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Icon name="Shield" className="text-[#00C389]" size={24} />
-                <span className="text-xl font-bold text-white">SafeDeal</span>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#00d4ff] to-[#0099cc] rounded-lg flex items-center justify-center">
+                  <Icon name="ShieldCheck" className="text-white" size={24} />
+                </div>
+                <div>
+                  <span className="text-lg font-bold text-white block leading-tight">Доверенный</span>
+                  <span className="text-xs text-[#00d4ff]">Цифровой Гарант</span>
+                </div>
               </div>
               <p className="text-white/60 text-sm">
                 Безопасные эскроу-сделки для бизнеса и частных лиц
@@ -820,36 +893,36 @@ ${contractData.conditions || '[Условия]'}
             <div>
               <h4 className="text-white font-semibold mb-4">Сервис</h4>
               <ul className="space-y-2">
-                <li><button onClick={() => scrollToSection('how-it-works')} className="text-white/60 hover:text-white text-sm">Как работает</button></li>
-                <li><button onClick={() => scrollToSection('pricing')} className="text-white/60 hover:text-white text-sm">Тарифы</button></li>
-                <li><button onClick={() => scrollToSection('faq')} className="text-white/60 hover:text-white text-sm">FAQ</button></li>
+                <li><button onClick={() => scrollToSection('how-it-works')} className="text-white/60 hover:text-[#00d4ff] text-sm">Как работает</button></li>
+                <li><button onClick={() => scrollToSection('pricing')} className="text-white/60 hover:text-[#00d4ff] text-sm">Тарифы</button></li>
+                <li><button onClick={() => scrollToSection('faq')} className="text-white/60 hover:text-[#00d4ff] text-sm">FAQ</button></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-white font-semibold mb-4">Компания</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-white/60 hover:text-white text-sm">О нас</a></li>
-                <li><a href="#" className="text-white/60 hover:text-white text-sm">Блог</a></li>
-                <li><a href="#" className="text-white/60 hover:text-white text-sm">Контакты</a></li>
+                <li><a href="#" className="text-white/60 hover:text-[#00d4ff] text-sm">О нас</a></li>
+                <li><a href="#" className="text-white/60 hover:text-[#00d4ff] text-sm">Блог</a></li>
+                <li><a href="#" className="text-white/60 hover:text-[#00d4ff] text-sm">Контакты</a></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-white font-semibold mb-4">Документы</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-white/60 hover:text-white text-sm">Пользовательское соглашение</a></li>
-                <li><a href="#" className="text-white/60 hover:text-white text-sm">Политика конфиденциальности</a></li>
-                <li><a href="#" className="text-white/60 hover:text-white text-sm">Публичная оферта</a></li>
+                <li><a href="#" className="text-white/60 hover:text-[#00d4ff] text-sm">Соглашение</a></li>
+                <li><a href="#" className="text-white/60 hover:text-[#00d4ff] text-sm">Конфиденциальность</a></li>
+                <li><a href="#" className="text-white/60 hover:text-[#00d4ff] text-sm">Оферта</a></li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-white/60 text-sm">© 2024 SafeDeal. Все права защищены.</p>
+          <div className="border-t border-[#00d4ff]/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-white/60 text-sm">© 2024 Доверенный Цифровой Гарант. Все права защищены.</p>
             <div className="flex gap-4">
-              <Icon name="Mail" className="text-white/60 hover:text-white cursor-pointer" size={20} />
-              <Icon name="Phone" className="text-white/60 hover:text-white cursor-pointer" size={20} />
+              <Icon name="Mail" className="text-white/60 hover:text-[#00d4ff] cursor-pointer" size={20} />
+              <Icon name="Phone" className="text-white/60 hover:text-[#00d4ff] cursor-pointer" size={20} />
             </div>
           </div>
         </div>
